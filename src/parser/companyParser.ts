@@ -162,7 +162,7 @@ export class CompanyParser implements PageParser<CompanyScrapedItem> {
     $(".div_list_cty > div").each((_, el) => {
       const card = $(el);
 
-      const anchor = card.find(".listings_center .text-capitalize a").first();
+      const anchor = card.find("[class*='listings_center'] .text-capitalize a").first();
       const name = cleanText(anchor.text());
       if (!name) return;
 
