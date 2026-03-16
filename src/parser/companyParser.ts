@@ -120,10 +120,10 @@ function parseContactSection(card: cheerio.Cheerio<any>): ParsedContact {
   const webLink = section.find('a[href]:not([href^="mailto:"])').first();
 
   const emailAddress =
-    cleanText(emailLink.text()) ||
-    cleanText(emailLink.attr("href")?.slice("mailto:".length));
+    cleanText(emailLink.attr("href")?.slice("mailto:".length)) ||
+    cleanText(emailLink.attr("title")?.replace(/^.*?:\s*/, "")); // "Dia chi email: abc@..." → "abc@..."
 
-  const website = cleanText(webLink.text()) || cleanText(webLink.attr("href"));
+  const website = cleanText(webLink.attr("href")) || cleanText(webLink.text());
 
   return { emailAddress, website };
 }
