@@ -129,11 +129,26 @@ function parseContactSection(card: cheerio.Cheerio<any>): ParsedContact {
 }
 
 function parseHotline(card: cheerio.Cheerio<any>): string | undefined {
-  const hotlineBlock = card.find(".hotline, [class*='hotline']").first();
+  // Tìm thẳng tel link trong span.fw500 (cấu trúc thực tế trong HTML)
+  const telInSpan = card
+    .find("span.fw500 a[href^='tel:']")
+    .first()
+    .attr("href");
 
-  const telHref =
-    hotlineBlock.find('a[href^="tel:"]').first().attr("href") ||
-    hotlineBlock.parent().find('a[href^="tel:"]').first().attr("href");
+  if (telInSpan) return normalizePhone(telInSpan.slice("tel:".length));
+
+  // Fallback: tìm div nào chứa text "Hotline" rồi lấy tel link trong đó
+  let telHref: string | undefined;
+  card.find("div, p").each((_, el) => {
+    const $el = card.find(el as any);
+    if ($el.text().toLowerCase().includes("hotline")) {
+      const href = $el.find("a[href^='tel:']").first().attr("href");
+      if (href) {
+        telHref = href;
+        return false; // break
+      }
+    }
+  });
 
   return normalizePhone(telHref?.slice("tel:".length));
 }
