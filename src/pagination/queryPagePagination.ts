@@ -1,4 +1,4 @@
-import type { PaginationStrategy } from "../core/types.js";
+import type { PaginationStrategy } from "../core/pagination.js";
 
 export class QueryPagePagination implements PaginationStrategy {
   constructor(

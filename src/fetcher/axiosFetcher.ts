@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { Fetcher, FetchResult } from "../core/types.js";
+import type { Fetcher, FetchResult } from "../core/fetcher.js";
 
 export class AxiosFetcher implements Fetcher {
   async fetch(url: string): Promise<FetchResult> {

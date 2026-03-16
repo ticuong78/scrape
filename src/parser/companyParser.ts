@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
-import type { PageParser, ScrapedItem } from "../core/types.js";
+import type { PageParser } from "../core/parser.js";
+import type { ScrapedItem } from "../core/types.js";
 
 export interface CompanyScrapedItem extends ScrapedItem {
   name: string;
@@ -165,8 +166,7 @@ export class CompanyParser implements PageParser<CompanyScrapedItem> {
       const name = cleanText(anchor.text());
       if (!name) return;
 
-      const href = cleanText(anchor.attr("href"));
-      const id = href ? (safeUrl(href, baseUrl) ?? name) : name;
+      const id = card.find(".stt_txt").text().trim();
 
       const category = cleanText(
         card.find(".div_logo_diachi .nganh_listing_txt").first().text(),

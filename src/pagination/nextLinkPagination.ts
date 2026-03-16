@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import type { PaginationStrategy } from "../core/types.js";
+import type { PaginationStrategy } from "../core/pagination.js";
 
 export class NextLinkPagination implements PaginationStrategy {
   constructor(private selector: string) {}
