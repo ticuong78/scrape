@@ -32,7 +32,6 @@ dist-ssr
 *.local
 
 # Editor directories and files
-.vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
@@ -41,3 +40,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+dist-electron
