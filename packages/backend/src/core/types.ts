@@ -1,3 +1,3 @@
 export type ScrapedItem = {
-  id: String;
+  id: string;
 };

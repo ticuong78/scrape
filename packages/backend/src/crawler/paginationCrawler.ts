@@ -28,8 +28,9 @@ export class PaginationCrawler<T> {
   async run(
     options: CrawlOptions,
     discoverMaxPages?: DiscoverMaxPages,
-  ): Promise<void> {
+  ): Promise<T[]> {
     const visited = new Set<string>();
+    const allItems: T[] = [];
     let currentUrl: string | null = options.startUrl;
     let currentPage = 1;
     const delayMs = options.delayMs ?? 1000;
@@ -63,11 +64,14 @@ export class PaginationCrawler<T> {
 
       const res = await this.fetcher.fetch(currentUrl);
 
-      this.logger.debug(`Fetched response status=${res.status} bodyLength=${res.body.length}`, {
-        stage: "fetch",
-        url: currentUrl,
-        page: currentPage,
-      });
+      this.logger.debug(
+        `Fetched response status=${res.status} bodyLength=${res.body.length}`,
+        {
+          stage: "fetch",
+          url: currentUrl,
+          page: currentPage,
+        },
+      );
 
       if (res.status >= 400) {
         this.logger.error(`Fetch failed with status=${res.status}`, {
@@ -113,6 +117,7 @@ export class PaginationCrawler<T> {
 
       const items = this.parser.parseItems(res.body, currentUrl);
       totalItems += items.length;
+      allItems.push(...items);
 
       this.logger.info(
         `Parsed items=${items.length}, totalItems=${totalItems}`,
@@ -167,6 +172,8 @@ export class PaginationCrawler<T> {
       stage: "run",
       page: currentPage - 1,
     });
+
+    return allItems;
   }
 }
 

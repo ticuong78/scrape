@@ -1,9 +1,11 @@
 {
   "name": "scrape",
   "private": true,
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "yarn workspace @scrape/frontend dev:electron",
+    "dev": "yarn workspace @scrape/backend build && yarn workspace @scrape/frontend dev:electron",
     "build": "yarn workspace @scrape/backend build && yarn workspace @scrape/frontend build:all",
     "preview": "yarn workspace @scrape/frontend preview:electron"
   }

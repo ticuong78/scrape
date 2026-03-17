@@ -15,7 +15,12 @@ export default defineConfig({
           "vendor-react": ["react", "react-dom", "react-router"],
 
           // UI libraries
-          "vendor-mui": ["@mui/material", "@mui/icons-material", "@emotion/react", "@emotion/styled"],
+          "vendor-mui": [
+            "@mui/material",
+            "@mui/icons-material",
+            "@emotion/react",
+            "@emotion/styled",
+          ],
           "vendor-radix": [
             "@radix-ui/react-dialog",
             "@radix-ui/react-dropdown-menu",
@@ -25,7 +30,12 @@ export default defineConfig({
           ],
 
           // Utils
-          "vendor-utils": ["clsx", "tailwind-merge", "class-variance-authority", "date-fns"],
+          "vendor-utils": [
+            "clsx",
+            "tailwind-merge",
+            "class-variance-authority",
+            "date-fns",
+          ],
 
           // Charts
           "vendor-charts": ["recharts"],

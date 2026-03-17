@@ -1,10 +1,10 @@
 export interface CoreCompany {
-  name: String;
-  phoneNo?: String;
-  category?: String;
-  address?: String;
-  website?: String;
-  emailAddress?: String;
-  state?: String;
-  notes?: String;
+  name: string;
+  phoneNo?: string;
+  category?: string;
+  address?: string;
+  website?: string;
+  emailAddress?: string;
+  state?: string;
+  notes?: string;
 }
