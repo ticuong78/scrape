@@ -10,7 +10,10 @@
     "build": "tsc -b && vite build",
     "build:electron": "tsc -p tsconfig.electron.json",
     "build:all": "yarn build:electron && yarn build",
-    "preview:electron": "yarn build:all && node ../../node_modules/electron/cli.js dist-electron/main.cjs"
+    "preview:electron": "yarn build:all && node ../../node_modules/electron/cli.js dist-electron/main.cjs",
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
@@ -50,6 +53,7 @@
     "clsx": "2.1.1",
     "cmdk": "1.1.1",
     "date-fns": "3.6.0",
+    "electron-squirrel-startup": "^1.0.1",
     "embla-carousel-react": "8.6.0",
     "input-otp": "1.4.2",
     "lucide-react": "0.487.0",
@@ -73,9 +77,17 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@electron/packager": "^19.1.0",
+    "@electron-forge/cli": "^7.11.1",
+    "@electron-forge/maker-deb": "^7.11.1",
+    "@electron-forge/maker-rpm": "^7.11.1",
+    "@electron-forge/maker-squirrel": "^7.11.1",
+    "@electron-forge/maker-zip": "^7.11.1",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.11.1",
+    "@electron-forge/plugin-fuses": "^7.11.1",
+    "@electron/fuses": "^1.0.0",
     "@eslint/js": "^9.39.4",
     "@tailwindcss/vite": "4.1.12",
+    "@types/electron-squirrel-startup": "^1",
     "@types/node": "^24.12.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
