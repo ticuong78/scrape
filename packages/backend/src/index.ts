@@ -6,6 +6,8 @@ export * from "./pagination/queryPagePagination.js";
 export * from "./parser/companyParser.js";
 export * from "./storage/excelFileStorage.js";
 export * from "./storage/jsonFileStorage.js";
+export * from "./storage/apiCallStorage.js";
+export * from "./storage/propertyMappedStorage.js";
 export * from "./utils.js";
 export * from "./types/core.js";
 export * from "./core/crawler.js";

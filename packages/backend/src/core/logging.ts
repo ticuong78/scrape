@@ -6,6 +6,7 @@ export interface LogContext {
   stage?: string;
   page?: number;
   url?: string;
+  maxPages?: number;
 }
 
 export interface Logger {

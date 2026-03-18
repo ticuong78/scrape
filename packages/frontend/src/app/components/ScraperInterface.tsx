@@ -64,11 +64,39 @@ function generateId(): string {
 // ── Component ────────────────────────────────────────────────────────────
 
 const ROWS_PER_PAGE = 15;
+const SCRAPED_DATA_FIELDS: (keyof ScrapedData)[] = [
+  "id",
+  "name",
+  "category",
+  "address",
+  "location",
+  "state",
+  "telephone",
+  "hotline",
+  "emailAddress",
+  "website",
+];
 
 export function ScraperInterface() {
   const [url, setUrl] = useState<string>(
-    "https://trangvangvietnam.com/categories/484645/logistics-dich-vu-logistics.html",
+    "https://raw.githubusercontent.com/ticuong78/scrape/master/test/quick-test.html",
   );
+  const [mappingPinned, setMappingPinned] = useState<boolean>(
+    () => localStorage.getItem("mapping-pinned") === "true",
+  );
+  const [mappingOpen, setMappingOpen] = useState<boolean>(false);
+  const [propertyMapping, setPropertyMapping] = useState<
+    Record<string, string>
+  >(() => {
+    if (localStorage.getItem("mapping-pinned") === "true") {
+      try {
+        return JSON.parse(localStorage.getItem("mapping-data") ?? "{}");
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  });
   const [previewPage, setPreviewPage] = useState(1);
   const [exportFormat, setExportFormat] = useState<ExportFormat>("json");
   const [apiUrl, setApiUrl] = useState("");
@@ -95,8 +123,84 @@ export function ScraperInterface() {
     previewPage * ROWS_PER_PAGE,
   );
 
+  const toggleMappingPin = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = !mappingPinned;
+    setMappingPinned(next);
+    localStorage.setItem("mapping-pinned", String(next));
+
+    if (next) {
+      localStorage.setItem("mapping-data", JSON.stringify(propertyMapping));
+    } else {
+      localStorage.removeItem("mapping-data");
+    }
+  };
+
+  const updateMapping = (field: string, value: string) => {
+    setPropertyMapping((prev) => {
+      const next = { ...prev };
+      if (value.trim() === "") {
+        delete next[field];
+      } else {
+        next[field] = value;
+      }
+
+      if (mappingPinned) {
+        localStorage.setItem("mapping-data", JSON.stringify(next));
+      }
+
+      return next;
+    });
+  };
+
+  // Thêm vào đầu component, sau các useState
+  // @ts-ignore
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.innerHTML = `
+      /* Scrollbar toàn app */
+      ::-webkit-scrollbar {
+        width: 3px;
+        height: 3px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        transition: background 0.2s;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.18);
+      }
+      ::-webkit-scrollbar-corner {
+        background: transparent;
+      }
+
+      /* Scrollbar console — hơi sáng hơn để dễ thấy */
+      .console-scroll::-webkit-scrollbar-thumb {
+        background: rgba(139, 92, 246, 0.25);
+      }
+      .console-scroll::-webkit-scrollbar-thumb:hover {
+        background: rgba(139, 92, 246, 0.45);
+      }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
+
   useEffect(() => {
     window.electronAPI.getDefaultPath().then((value) => setSavePath(value));
+    const unsubscribe = window.electronAPI.onProgress((data) => {
+      setProgress(data.percent);
+
+      if (String(data.message).includes("Error")) setStatus("error");
+
+      addLog(data.message);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -119,18 +223,18 @@ export function ScraperInterface() {
 
     setStatus("running");
     setProgress(0);
-    setLogs([]);
+    // setLogs([]);
     setPreviewData(null);
     addLog(`Bắt đầu scrape: ${url}`);
     addLog(`Config: delay=${config.delayMs}ms, maxPages=${config.maxPages}`);
 
     try {
       const file = await window.electronAPI.startScrape(
-        // ✅ Thêm await
         url,
         exportFormat,
-        savePath,
+        exportFormat === "api" ? apiUrl : savePath, // ← truyền apiUrl nếu là api mode
         config,
+        propertyMapping,
       );
 
       const newFile: SavedFile = {
@@ -155,6 +259,28 @@ export function ScraperInterface() {
       setStatus("done");
     }
   };
+
+  function handleOpenInFolder(file: SavedFile) {
+    addLog("Opening in folder " + file.savedPath);
+    window.electronAPI.handleOpenInFolder(file);
+  }
+
+  async function handleDeleteFile(file: SavedFile) {
+    const result = await window.electronAPI.handleDeleteFile(file);
+
+    if (result.ok) {
+      addLog("Successfully deleted " + file.savedPath);
+
+      setSavedFiles((prev) => prev.filter((f) => f.id !== file.id));
+
+      if (selectedFileId === file.id) {
+        setSelectedFileId(null);
+        setPreviewData(null);
+      }
+    } else {
+      addLog("Failed to delete " + file.savedPath + " since " + result.error);
+    }
+  }
 
   const isValidUrl = url.length > 0;
 
@@ -279,7 +405,7 @@ export function ScraperInterface() {
 
             {exportFormat === "api" && (
               <div className="mt-3 space-y-2">
-                <label className="text-[11px] text-white/30 uppercase tracking-widest font-medium">
+                <label className="text-[12px] text-white/50 uppercase tracking-widest mb-2 block">
                   API Endpoint
                 </label>
                 <div className="relative flex items-center">
@@ -348,6 +474,131 @@ export function ScraperInterface() {
                 </p>
               </div>
             )}
+          </div>
+
+          {/* Property Mapping — độc lập, NGOÀI div p-5 */}
+          <div className="px-5 pb-4">
+            <div
+              onClick={() => setMappingOpen(!mappingOpen)}
+              className="w-full flex items-center justify-between py-2.5 px-4 rounded-xl bg-white/[0.03] border border-white/[0.06] text-white/50 hover:text-white/70 hover:bg-white/[0.05] transition-all cursor-pointer select-none"
+            >
+              <div className="flex items-center gap-2 text-[12px]">
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
+                  <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+                </svg>
+                Đổi tên thuộc tính
+                {Object.keys(propertyMapping).length > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-violet-500/20 text-violet-300 border border-violet-500/20">
+                    {Object.keys(propertyMapping).length} đã đổi
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                {mappingOpen && (
+                  <button
+                    onClick={toggleMappingPin}
+                    title={
+                      mappingPinned
+                        ? "Bỏ lưu dữ liệu"
+                        : "Lưu dữ liệu cho lần sau"
+                    }
+                    className={`p-1 rounded-md transition-all ${
+                      mappingPinned
+                        ? "text-violet-400 bg-violet-500/15 border border-violet-500/20"
+                        : "text-white/25 hover:text-white/50 hover:bg-white/[0.06]"
+                    }`}
+                  >
+                    <svg
+                      className="w-3 h-3"
+                      viewBox="0 0 24 24"
+                      fill={mappingPinned ? "currentColor" : "none"}
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M12 17v5M9 10.5V6a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h1m8-2.5V6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1h-1M7 8h10l1 4H6l1-4Z" />
+                    </svg>
+                  </button>
+                )}
+                {mappingOpen ? (
+                  <ChevronUp className="w-3.5 h-3.5" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5" />
+                )}
+              </div>
+            </div>
+
+            {/* ← AnimatePresence đầy đủ, KHÔNG phải comment */}
+            <AnimatePresence>
+              {mappingOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-3 rounded-xl border border-white/[0.06] overflow-hidden">
+                    <div className="grid grid-cols-2 gap-3 px-3 py-2 bg-white/[0.03] border-b border-white/[0.06]">
+                      <span className="text-[10px] text-white/30 uppercase tracking-widest">
+                        Tên gốc
+                      </span>
+                      <span className="text-[10px] text-white/30 uppercase tracking-widest">
+                        Tên mới
+                      </span>
+                    </div>
+                    <div className="divide-y divide-white/[0.04]">
+                      {SCRAPED_DATA_FIELDS.map((field) => (
+                        <div
+                          key={field}
+                          className="grid grid-cols-2 gap-3 px-3 py-2 items-center hover:bg-white/[0.02] transition-colors"
+                        >
+                          <span
+                            className="text-[11px] text-white/50"
+                            style={{
+                              fontFamily: "'JetBrains Mono', monospace",
+                            }}
+                          >
+                            {field}
+                          </span>
+                          <input
+                            type="text"
+                            value={propertyMapping[field] ?? ""}
+                            onChange={(e) =>
+                              updateMapping(field, e.target.value)
+                            }
+                            placeholder={field}
+                            className="h-7 px-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white/70 placeholder:text-white/20 focus:outline-none focus:border-violet-500/40 transition-all"
+                            style={{
+                              fontSize: 11,
+                              fontFamily: "'JetBrains Mono', monospace",
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    {Object.keys(propertyMapping).length > 0 && (
+                      <div className="px-3 py-2 border-t border-white/[0.06] flex justify-end">
+                        <button
+                          onClick={() => {
+                            setPropertyMapping({});
+                            localStorage.removeItem("mapping-data");
+                          }}
+                          className="text-[11px] text-red-400/60 hover:text-red-400 transition-colors"
+                        >
+                          Reset tất cả
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Config Accordion */}
@@ -494,25 +745,25 @@ export function ScraperInterface() {
           </div>
 
           {/* Log Console */}
-          <div className="flex-1 flex flex-col border-t border-white/5">
-            <div className="flex items-center gap-2 px-5 py-2.5 text-[11px] text-white/30 uppercase tracking-widest">
+          <div className="flex-1 flex flex-col border-t border-white/5 min-h-0">
+            <div className="flex items-center gap-2 px-5 py-2.5 text-[11px] text-white/30 uppercase tracking-widest shrink-0">
               <Terminal className="w-3 h-3" />
               Console
             </div>
             <div
               ref={logRef}
-              className="flex-1 px-5 pb-4 overflow-y-auto max-h-[200px] space-y-0.5"
+              className="console-scroll flex-1 pb-4 overflow-y-auto max-h-[200px]"
               style={{ fontFamily: "'JetBrains Mono', monospace" }}
             >
               {logs.length === 0 ? (
-                <p className="text-[11px] text-white/15 italic">
+                <p className="text-[11px] text-white/15 italic px-5">
                   Chưa có log nào...
                 </p>
               ) : (
                 logs.map((log, i) => (
                   <p
                     key={i}
-                    className="text-[11px] text-white/40 leading-relaxed"
+                    className="text-[11px] text-white/40 leading-relaxed px-5 break-all"
                   >
                     {log}
                   </p>
@@ -627,7 +878,7 @@ export function ScraperInterface() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDeleteFile(file.id);
+                            handleDeleteFile(file);
                           }}
                           className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
                           title="Xoá khỏi danh sách"

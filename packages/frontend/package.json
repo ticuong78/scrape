@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:electron": "yarn build:electron && concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development node ../../node_modules/electron/cli.js dist-electron/main.cjs\"",
+    "dev:electron": "yarn build:electron && concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development node ../../node_modules/electron/cli.js --inspect=9229 dist-electron/main.cjs\"",
     "build": "tsc -b && vite build",
     "build:electron": "tsc -p tsconfig.electron.json",
     "build:all": "yarn build:electron && yarn build",

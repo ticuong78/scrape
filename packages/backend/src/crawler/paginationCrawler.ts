@@ -42,6 +42,7 @@ export class PaginationCrawler<T> {
       stage: "run",
       url: options.startUrl,
       page: 1,
+      maxPages: effectiveMaxPages,
     });
 
     while (currentUrl && currentPage <= effectiveMaxPages) {
@@ -60,6 +61,7 @@ export class PaginationCrawler<T> {
         stage: "fetch",
         url: currentUrl,
         page: currentPage,
+        maxPages: effectiveMaxPages,
       });
 
       const res = await this.fetcher.fetch(currentUrl);
@@ -98,6 +100,7 @@ export class PaginationCrawler<T> {
               stage: "pagination",
               url: currentUrl,
               page: currentPage,
+              maxPages: effectiveMaxPages,
             },
           );
         } else {
@@ -113,6 +116,7 @@ export class PaginationCrawler<T> {
         stage: "parse",
         url: currentUrl,
         page: currentPage,
+        maxPages: effectiveMaxPages,
       });
 
       const items = this.parser.parseItems(res.body, currentUrl);
@@ -125,6 +129,7 @@ export class PaginationCrawler<T> {
           stage: "parse",
           url: currentUrl,
           page: currentPage,
+          maxPages: effectiveMaxPages,
         },
       );
 
@@ -132,6 +137,7 @@ export class PaginationCrawler<T> {
         stage: "save",
         url: currentUrl,
         page: currentPage,
+        maxPages: effectiveMaxPages,
       });
 
       await this.storage.save(items);
@@ -140,6 +146,7 @@ export class PaginationCrawler<T> {
         stage: "save",
         url: currentUrl,
         page: currentPage,
+        maxPages: effectiveMaxPages,
       });
 
       const nextUrl = this.paginator.getNextPage({
@@ -171,6 +178,7 @@ export class PaginationCrawler<T> {
     this.logger.info(`Crawler finished, totalItems=${totalItems}`, {
       stage: "run",
       page: currentPage - 1,
+      maxPages: effectiveMaxPages,
     });
 
     return allItems;

@@ -1,5 +1,5 @@
 import path from "path";
-import { app, BrowserWindow, ipcMain, dialog } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, shell } from "electron";
 import * as fs from "node:fs";
 import {
   AxiosFetcher,
@@ -13,10 +13,58 @@ import {
   isValidUrl,
   ExcelFileStorage,
   JsonFileStorage,
+  Logger,
+  LogContext,
+  LogLevel,
+  APICallStorage,
+  PropertyMappedStorage,
 } from "@scrape/backend";
 import { resolve } from "node:path";
 
+let mainWindow: BrowserWindow;
+
 // --- HELPERS ---
+
+class OnProgressLogger implements Logger {
+  log(level: LogLevel, message: string, context: LogContext = {}): void {
+    const parts = [
+      `[${level.toUpperCase()}]`,
+      context.runId ? `[run:${context.runId}]` : "",
+      context.entity ? `[entity:${context.entity}]` : "",
+      context.stage ? `[stage:${context.stage}]` : "",
+      context.page !== undefined ? `[page:${context.page}]` : "",
+      context.url ? `[url:${context.url}]` : "",
+      message,
+    ].filter(Boolean);
+
+    if (!mainWindow.webContents.isLoading() && level === "info") {
+      console.log("==============");
+      console.log(context.page);
+      console.log(context.maxPages);
+      console.log(Math.round((context.page! / context.maxPages!) * 100));
+      mainWindow.webContents.send("scrape-progress", {
+        message: parts.join(" "),
+        percent: Math.round((context.page! / context.maxPages!) * 100),
+      });
+    }
+  }
+
+  debug(message: string, context?: LogContext): void {
+    this.log("debug", message, context);
+  }
+
+  info(message: string, context?: LogContext): void {
+    this.log("info", message, context);
+  }
+
+  warn(message: string, context?: LogContext): void {
+    this.log("warn", message, context);
+  }
+
+  error(message: string, context?: LogContext): void {
+    this.log("error", message, context);
+  }
+}
 
 function formatBytes(bytes: number, decimals = 2) {
   if (bytes === 0) return "0 Bytes";
@@ -51,12 +99,13 @@ export async function startScrape(
     new CompanyParser(),
     new QueryPagePagination("page"),
     storage,
+    new OnProgressLogger(),
   );
 
   const allItems = await crawler.run(
     {
       ...options,
-      startUrl: url, // ✅ Merge url vào options
+      startUrl: url,
     },
     extractMaxPageFromPagination,
   );
@@ -67,7 +116,6 @@ export async function startScrape(
 // --- ELECTRON MAIN ---
 
 const isDev = process.env.NODE_ENV === "development";
-let mainWindow: BrowserWindow;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -117,18 +165,8 @@ ipcMain.handle(
     storage: string,
     rawFolderResponse: any,
     options: CrawlOptions,
+    propertyMapping: Record<string, string> = {},
   ) => {
-    // 1. Xử lý lấy đường dẫn string từ tham số truyền vào
-    const folderPath =
-      typeof rawFolderResponse === "string"
-        ? rawFolderResponse
-        : getPathFromDialog(rawFolderResponse);
-
-    if (!folderPath) {
-      throw new Error("No folder selected or invalid path.");
-    }
-
-    // 2. Cấu hình Storage dựa trên extension
     const now = new Date();
     const timestamp = [
       now.getFullYear(),
@@ -140,38 +178,92 @@ ipcMain.handle(
       String(now.getSeconds()).padStart(2, "0"),
     ].join("");
 
-    const ext = storage === "xlsx" ? "xlsx" : "json";
-    const fileName = `products_${timestamp}.${ext}`;
-    const fullPath = path.join(folderPath, fileName);
-
     let storageObj: Storage<CompanyScrapedItem>;
+    let fullPath: string | null = null;
+    let fileName: string;
 
-    if (storage === "xlsx") {
-      storageObj = new ExcelFileStorage<CompanyScrapedItem>(fullPath);
+    if (storage === "api") {
+      const apiUrl = rawFolderResponse as string;
+      if (!apiUrl || !apiUrl.startsWith("http")) {
+        throw new Error("Invalid API URL.");
+      }
+
+      fileName = `api_call_${timestamp}`;
+      storageObj = new APICallStorage<CompanyScrapedItem>(apiUrl);
     } else {
-      storageObj = new JsonFileStorage<CompanyScrapedItem>(fullPath);
+      const folderPath =
+        typeof rawFolderResponse === "string"
+          ? rawFolderResponse
+          : getPathFromDialog(rawFolderResponse);
+
+      if (!folderPath) {
+        throw new Error("No folder selected or invalid path.");
+      }
+
+      const ext = storage === "xlsx" ? "xlsx" : "json";
+      fileName = `products_${timestamp}.${ext}`;
+      fullPath = path.join(folderPath, fileName);
+
+      if (storage === "xlsx") {
+        storageObj = new ExcelFileStorage<CompanyScrapedItem>(fullPath);
+      } else {
+        storageObj = new JsonFileStorage<CompanyScrapedItem>(fullPath);
+      }
     }
 
-    // 3. Thực thi
-    const allItems = await startScrape(url, storageObj, options);
+    const finalStorage: Storage<any> =
+      Object.keys(propertyMapping).length > 0
+        ? // @ts-ignore
+          new PropertyMappedStorage(storageObj, propertyMapping)
+        : storageObj;
 
-    // 4. Lấy thông tin file sau khi scrape xong
+    const allItems = await startScrape(url, finalStorage, options);
+
     let fileSizeInBytes = 0;
     let fileSizeFormatted = "0 B";
 
-    if (fs.existsSync(fullPath)) {
+    if (fullPath && fs.existsSync(fullPath)) {
       const stats = fs.statSync(fullPath);
       fileSizeInBytes = stats.size;
       fileSizeFormatted = formatBytes(fileSizeInBytes);
     }
 
     return {
-      path: folderPath,
+      path: fullPath ?? rawFolderResponse,
       size: fileSizeInBytes,
-      fileName: fileName,
+      fileName,
       sizeLabel: fileSizeFormatted,
       data: allItems,
     };
+  },
+);
+
+ipcMain.on(
+  "open-in-folder",
+  (
+    _e,
+    file: {
+      id: string;
+      name: string;
+      format: "json" | "xlsx" | "api";
+      size: string;
+      savedAt: Date;
+      savedPath: string;
+      data?: {
+        id: string;
+        name: string;
+        category: string;
+        address: string;
+        location: string;
+        state: string;
+        telephone: string;
+        hotline: string;
+        emailAddress: string;
+        website: string;
+      }[];
+    },
+  ) => {
+    shell.showItemInFolder(file.savedPath);
   },
 );
 
@@ -186,3 +278,50 @@ ipcMain.handle("get-default-path", () => {
 
   return defaultPath;
 });
+
+ipcMain.handle(
+  "delete-in-folder",
+  (
+    _e,
+    file: {
+      id: string;
+      name: string;
+      format: "json" | "xlsx" | "api";
+      size: string;
+      savedAt: Date;
+      savedPath: string;
+      data?: {
+        id: string;
+        name: string;
+        category: string;
+        address: string;
+        location: string;
+        state: string;
+        telephone: string;
+        hotline: string;
+        emailAddress: string;
+        website: string;
+      }[];
+    },
+  ) => {
+    try {
+      console.log(path.join(file.savedPath, file.name));
+
+      if (!fs.existsSync(path.join(file.savedPath, file.name)))
+        return {
+          ok: true,
+        };
+
+      fs.rmSync(path.join(file.savedPath, file.name));
+
+      return {
+        ok: true,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error: error,
+      };
+    }
+  },
+);
