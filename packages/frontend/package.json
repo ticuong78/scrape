@@ -84,6 +84,7 @@
     "electron": "^41.0.2",
     "electron-builder": "^26.8.1",
     "electron-builder-squirrel-windows": "^26.8.1",
+    "electron-forge": "^5.2.4",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
