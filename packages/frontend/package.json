@@ -3,7 +3,14 @@
   "private": true,
   "version": "1.0.0",
   "packageManager": "yarn@4.12.0",
+  "main": ".vite/build/main.cjs",
   "type": "module",
+  "author": {
+    "name": "Lê Phạm Hùng Cường",
+    "email": "cuongdayne17@gmail.com",
+    "url": "https://www.facebook.com/hades.rander"
+  },
+  "description": "Đây là ứng dụng dùng để Scrape Trang Vàng Việt Nam. Ứng dụng lấy tên là WebScraper Pro để thể hiện sự cải tiến của nó so với các ứng dụng cũ của team đã build.",
   "scripts": {
     "dev": "vite",
     "dev:electron": "yarn build:electron && concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development node ../../node_modules/electron/cli.js --inspect=9229 dist-electron/main.cjs\"",
@@ -13,7 +20,8 @@
     "preview:electron": "yarn build:all && node ../../node_modules/electron/cli.js dist-electron/main.cjs",
     "start": "electron-forge start",
     "package": "electron-forge package",
-    "make": "electron-forge make"
+    "make": "electron-forge make",
+    "publish": "electron-forge publish"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
@@ -84,6 +92,8 @@
     "@electron-forge/maker-zip": "^7.11.1",
     "@electron-forge/plugin-auto-unpack-natives": "^7.11.1",
     "@electron-forge/plugin-fuses": "^7.11.1",
+    "@electron-forge/plugin-vite": "^7.11.1",
+    "@electron-forge/publisher-github": "^7.11.1",
     "@electron/fuses": "^1.0.0",
     "@eslint/js": "^9.39.4",
     "@tailwindcss/vite": "4.1.12",
@@ -94,6 +104,7 @@
     "@vitejs/plugin-react": "5.1.0",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
+    "dotenv": "^17.3.1",
     "electron": "^41.0.3",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",

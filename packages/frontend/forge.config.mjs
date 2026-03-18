@@ -1,5 +1,6 @@
 import { FusesPlugin } from "@electron-forge/plugin-fuses"
 import { FuseV1Options, FuseVersion } from "@electron/fuses"
+import 'dotenv/config'
 
 export default {
   packagerConfig: {
@@ -9,30 +10,36 @@ export default {
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-      config: {
-        "name": "WebScraper Pro"
-      },
-    },
-    {
-      name: '@electron-forge/maker-zip',
-      platforms: ['darwin'],
-    },
-    {
-      name: '@electron-forge/maker-deb',
-      config: {},
-    },
-    {
-      name: '@electron-forge/maker-rpm',
-      config: {},
+      config: { name: "WebScraperPro" },
     },
   ],
+  publishers: [{
+    name: '@electron-forge/publisher-github',
+    config: {
+      repository: {
+        owner: 'ticuong78',
+        name: 'scrape'
+      },
+      prerelease: false,
+      draft: true  // ← tạo draft trước, kiểm tra xong mới release
+    }
+  }],
   plugins: [
     {
-      name: '@electron-forge/plugin-auto-unpack-natives',
-      config: {},
+      name: '@electron-forge/plugin-vite',
+      config: {
+        build: [
+          { entry: 'electron/main.cts', config: 'vite.main.config.ts' },
+          { entry: 'electron/preload.cts', config: 'vite.preload.config.ts' },
+        ],
+        renderer: [
+          {
+            name: 'main_window',
+            config: 'vite.config.ts',
+          },
+        ],
+      },
     },
-    // Fuses are used to enable/disable various Electron functionality
-    // at package time, before code signing the application
     new FusesPlugin({
       version: FuseVersion.V1,
       [FuseV1Options.RunAsNode]: false,
@@ -43,4 +50,4 @@ export default {
       [FuseV1Options.OnlyLoadAppFromAsar]: true,
     }),
   ],
-};
+}
