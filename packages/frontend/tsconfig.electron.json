@@ -6,7 +6,8 @@
     "rootDir": "electron",
     "strict": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true
   },
   "include": ["electron/**/*"]
 }

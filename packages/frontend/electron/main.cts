@@ -305,14 +305,14 @@ ipcMain.handle(
     },
   ) => {
     try {
-      console.log(path.join(file.savedPath, file.name));
+      console.log(path.join(file.savedPath));
 
-      if (!fs.existsSync(path.join(file.savedPath, file.name)))
+      if (!fs.existsSync(path.join(file.savedPath)))
         return {
           ok: true,
         };
 
-      fs.rmSync(path.join(file.savedPath, file.name));
+      fs.rmSync(path.join(file.savedPath));
 
       return {
         ok: true,
