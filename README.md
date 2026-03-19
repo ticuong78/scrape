@@ -28,7 +28,7 @@ Chính vì thế, chúng tôi cung cấp một công cụ giúp người dùng c
 ```bash
 # 1. Clone repository
 git clone https://github.com/ticuong78/scrape.git
-cd webscraper-pro
+cd scrape
 
 # 2. Kích hoạt Corepack và cài dependency
 corepack enable
