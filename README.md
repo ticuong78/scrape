@@ -15,18 +15,19 @@ Chính vì thế, chúng tôi cung cấp một công cụ giúp người dùng c
 
 ## Yêu cầu hệ thống
 
-| Yêu cầu      | Phiên bản                          |
-|--------------|------------------------------------|
-| Node.js      | >= 18.x                            |
-| Yarn         | >= 4.x (via Corepack)              |
+| Yêu cầu      | Phiên bản                           |
+| ------------ | ----------------------------------- |
+| Node.js      | >= 18.x                             |
+| Yarn         | >= 4.x (via Corepack)               |
 | Hệ điều hành | Windows, macOS, hoặc Linux mới nhất |
 
 ---
 
 ## Cài đặt và chạy
+
 ```bash
 # 1. Clone repository
-git clone https://github.com/your-username/webscraper-pro.git
+git clone https://github.com/ticuong78/scrape.git
 cd webscraper-pro
 
 # 2. Kích hoạt Corepack và cài dependency
@@ -127,16 +128,16 @@ xuyên suốt dự án.
 
 ### Danh sách công nghệ
 
-| Công nghệ    | Vai trò                                      |
-|--------------|----------------------------------------------|
-| Electron     | Nền tảng ứng dụng Desktop đa nền tảng        |
-| TypeScript   | Ngôn ngữ chính, kiểm soát kiểu dữ liệu       |
-| TSX          | Viết React component với TypeScript          |
-| React        | Xây dựng giao diện người dùng                |
-| Vite         | Build tool & dev server                      |
-| Yarn         | Quản lý dependency                           |
-| Corepack     | Quản lý phiên bản package manager            |
-| ESLint       | Kiểm soát chất lượng và chuẩn mã nguồn       |
+| Công nghệ  | Vai trò                                |
+| ---------- | -------------------------------------- |
+| Electron   | Nền tảng ứng dụng Desktop đa nền tảng  |
+| TypeScript | Ngôn ngữ chính, kiểm soát kiểu dữ liệu |
+| TSX        | Viết React component với TypeScript    |
+| React      | Xây dựng giao diện người dùng          |
+| Vite       | Build tool & dev server                |
+| Yarn       | Quản lý dependency                     |
+| Corepack   | Quản lý phiên bản package manager      |
+| ESLint     | Kiểm soát chất lượng và chuẩn mã nguồn |
 
 ## Đóng góp (Contributing)
 
@@ -147,17 +148,23 @@ hay gửi pull request.
 
 1. Fork repository về tài khoản của bạn.
 2. Tạo branch mới từ `main`:
+
 ```bash
    git checkout -b feature/ten-tinh-nang
 ```
+
 3. Thực hiện thay đổi và commit theo chuẩn [Conventional Commits](https://www.conventionalcommits.org):
+
 ```bash
    git commit -m "feat: mô tả ngắn gọn thay đổi"
 ```
+
 4. Push branch lên remote:
+
 ```bash
    git push origin feature/ten-tinh-nang
 ```
+
 5. Mở Pull Request vào branch `main` và mô tả rõ nội dung thay đổi.
 
 ### Một số lưu ý
@@ -170,6 +177,7 @@ hay gửi pull request.
 ### Báo lỗi
 
 Nếu gặp lỗi, vui lòng mở một [GitHub Issue](../../issues) và cung cấp:
+
 - Mô tả lỗi và các bước tái hiện.
 - Phiên bản hệ điều hành và phiên bản ứng dụng.
 - Screenshot hoặc log từ Log Panel nếu có.
