@@ -186,7 +186,11 @@ Nếu gặp lỗi, vui lòng mở một [GitHub Issue](../../issues) và cung c�
 
 ## Video hướng dẫn sử dụng
 
+<div align="center">
+  
 ![Demo](./assets/demo.gif)
+
+</div>
 
 ---
 
