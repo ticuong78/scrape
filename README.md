@@ -147,7 +147,7 @@ hay gửi pull request.
 ### Quy trình đóng góp
 
 1. Fork repository về tài khoản của bạn.
-2. Tạo branch mới từ `main`:
+2. Tạo branch mới từ `master`:
 
 ```bash
    git checkout -b feature/ten-tinh-nang
@@ -165,7 +165,7 @@ hay gửi pull request.
    git push origin feature/ten-tinh-nang
 ```
 
-5. Mở Pull Request vào branch `main` và mô tả rõ nội dung thay đổi.
+5. Mở Pull Request vào branch `master` và mô tả rõ nội dung thay đổi.
 
 ### Một số lưu ý
 
